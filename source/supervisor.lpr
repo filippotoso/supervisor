@@ -12,12 +12,13 @@ uses
 
 var
   I: integer;
-  Directory,LockFileName, EndFileName, ConfigFileName: string;
+  Directory, LockFileName, EndFileName, ConfigFileName: string;
   Lock: NativeInt;
 
-  Sections:TStringList;
-  Threads:TThreadList;
-  Thread:TSupervisorThread;
+  Sections: TStringList;
+  Threads: TThreadList;
+  ThreadsList: TList;
+  Thread: TSupervisorThread;
   Config: TINIFile;
 
 begin
@@ -30,7 +31,7 @@ begin
 
   ConfigFileName := ParamStr(1);
 
-  Directory := IncludeTrailingPathDelimiter(ConfigFileName);
+  Directory := IncludeTrailingPathDelimiter(ExtractFileDir(ConfigFileName));
 
   LockFileName := Directory + 'supervisor.lock';
   EndFileName := Directory + 'supervisor.end';
@@ -60,7 +61,7 @@ begin
 
       Config.ReadSections(Sections);
 
-      for I:=0 to Sections.Count - 1 do
+      for I := 0 to Sections.Count - 1 do
       begin
         Thread := TSupervisorThread.Create;
         Thread.EndFileName := EndFileName;
@@ -71,7 +72,19 @@ begin
       end;
 
       while not FileExists(EndFileName) do
-        Sleep(60 * 1000);
+        Sleep(30 * 1000);
+
+      Sleep(30 * 1000);
+
+      ThreadsList := Threads.LockList;
+      try
+        for I := 0 to ThreadsList.Count - 1 do
+          TSupervisorThread(ThreadsList.Items[I]).Terminate();
+      finally
+        Threads.UnlockList;
+      end;
+
+      Sleep(30 * 1000);
 
       if FileExists(EndFileName) then
         DeleteFile(EndFileName);

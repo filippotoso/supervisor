@@ -17,12 +17,17 @@ Type
       FPath,FFileName,FCommand: string;
       FEndFileName: string;
       FParameters: string;
+      FProcess: TProcess;
       procedure SetCommand(AValue: string);
       procedure SetParameters(AValue: string);
     protected
+      FTerminated:Boolean;
       procedure Execute; override;
     public
-      Constructor Create;
+      constructor Create;
+      destructor Destroy; override;
+
+      procedure Terminate;
 
       property Command:string read FCommand write SetCommand;
       property Parameters:string read FParameters write SetParameters;
@@ -81,16 +86,27 @@ end;
 
 procedure TSupervisorThread.Execute;
 var
-  OutputString: String;
-  ExitStatus: Integer;
+   I: Integer;
 begin
 
-  while not Terminated do
+  FTerminated := False;
+
+  while not FTerminated do
   begin
 
     try
-      RunCommandIndir(FPath, FCommand, FArguments, OutputString, ExitStatus, [poWaitOnExit]);
+
+        FProcess.Executable := FCommand;
+
+        for I := 0 to Length(FArguments) - 1 do
+            FProcess.Parameters.Add(FArguments[I]);
+
+        FProcess.Options := FProcess.Options + [poWaitOnExit];
+
+        FProcess.Execute;
+
     except
+
     end;
 
     if FileExists(FEndFileName) then
@@ -106,6 +122,19 @@ end;
 constructor TSupervisorThread.Create;
 begin
   inherited Create(True);
+  FProcess := TProcess.Create(nil);
+end;
+
+destructor TSupervisorThread.Destroy;
+begin
+  FProcess.Free;
+  inherited Destroy;
+end;
+
+procedure TSupervisorThread.Terminate;
+begin
+  FTerminated := True;
+  FProcess.Terminate(0);
 end;
 
 end.

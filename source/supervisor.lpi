@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="&quot;D:\efes.to\software\Supervisor\bin&quot;"/>
+        <CommandLineParams Value="\media\sf_D_DRIVE\efes.to\components\filippo-toso\supervisor\bin\supervisor.ini"/>
       </local>
     </RunParams>
     <Units Count="2">
